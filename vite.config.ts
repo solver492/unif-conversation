@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
     return {
       server: {
         port: 3000,
-        host: 'unif-conversation.onrender.com',
+        host: '0.0.0.0',
       },
       plugins: [react()],
       define: {
