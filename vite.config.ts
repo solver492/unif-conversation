@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        allowedHosts: ['unif-conversation.onrender.com'] // Ajoute ici le domaine Render
       },
       plugins: [react()],
       define: {
