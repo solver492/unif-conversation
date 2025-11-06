@@ -25,6 +25,15 @@ export interface Client {
   email: string;
   avatar_url: string;
   origin: string;
+  location?: {
+    country?: string;
+    city?: string;
+    ip?: string;
+  };
+  first_seen?: string;
+  last_seen?: string;
+  page_url?: string;
+  referrer?: string;
 }
 
 export interface Conversation {
@@ -35,6 +44,8 @@ export interface Conversation {
   last_message_at: string;
   last_message_snippet: string;
   unread_count: number;
+  is_bot_active: boolean; // true = bot répond, false = agent a pris le contrôle
+  assigned_agent?: string;
 }
 
 export interface KnowledgeBaseItem {

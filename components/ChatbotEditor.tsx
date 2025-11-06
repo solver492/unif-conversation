@@ -72,6 +72,7 @@ export const ChatbotEditor: React.FC<ChatbotEditorProps> = ({ chatbot, onClose, 
     const [sourceInputValue, setSourceInputValue] = useState('');
     const addSourceRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
     
     const [testMessages, setTestMessages] = useState<Message[]>([]);
     const [isTesting, setIsTesting] = useState(false);
@@ -171,6 +172,34 @@ export const ChatbotEditor: React.FC<ChatbotEditorProps> = ({ chatbot, onClose, 
         setFormData({...formData, knowledge_base: formData.knowledge_base.filter(item => item.id !== id)});
     };
 
+    const handleAvatarClick = () => {
+        avatarInputRef.current?.click();
+    };
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            
+            // Vérifier que c'est une image
+            if (!file.type.startsWith('image/')) {
+                alert('Veuillez sélectionner une image (JPG, PNG, GIF, etc.)');
+                return;
+            }
+            
+            // Vérifier la taille (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('L\'image est trop grande. Taille maximale: 2MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({...formData, avatar_url: reader.result as string});
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSubmit = () => {
         onSave(formData);
     };
@@ -205,42 +234,48 @@ export const ChatbotEditor: React.FC<ChatbotEditorProps> = ({ chatbot, onClose, 
         setTestMessages(updatedMessages);
         setIsTesting(true);
 
-        const knowledgeBaseContent = formData.knowledge_base
-            .filter(item => item.status === 'indexed')
-            .map(item => `Source (${item.type}):\n${item.content}`)
-            .join('\n\n');
-        
-        const history = updatedMessages.map(m => `${m.sender_name}: ${m.content}`).join('\n');
+        try {
+            const knowledgeBaseContent = formData.knowledge_base
+                .filter(item => item.status === 'indexed')
+                .map(item => `Source (${item.type}):\n${item.content}`)
+                .join('\n\n');
+            
+            let systemPromptWithKB = formData.system_prompt;
+            if (knowledgeBaseContent) {
+                systemPromptWithKB += `\n\nYou have the following information in your knowledge base to answer questions:\n---\n${knowledgeBaseContent}\n---`;
+            }
 
-        const fullPrompt = `
-${formData.system_prompt}
+            const aiResponseText = await getGeminiResponse({
+                userMessage,
+                conversationHistory: updatedMessages,
+                systemPrompt: systemPromptWithKB
+            });
 
-You have the following information in your knowledge base to answer questions:
----
-${knowledgeBaseContent || "No knowledge base provided."}
----
+            const newAiMessage: Message = {
+                id: `test_ai_${Date.now()}`,
+                conversation_id: 'test_session',
+                sender_type: 'ai',
+                sender_name: formData.name,
+                content: aiResponseText,
+                attachments: [],
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
 
-Current conversation history:
----
-${history}
----
-
-Based on all the above, provide a response.`;
-
-        const aiResponseText = await getGeminiResponse(fullPrompt);
-
-        const newAiMessage: Message = {
-            id: `test_ai_${Date.now()}`,
-            conversation_id: 'test_session',
-            sender_type: 'ai',
-            sender_name: formData.name,
-            content: aiResponseText,
-            attachments: [],
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-
-        setTestMessages(prev => [...prev, newAiMessage]);
-        setIsTesting(false);
+            setTestMessages(prev => [...prev, newAiMessage]);
+        } catch (error: any) {
+            const errorMessage: Message = {
+                id: `test_error_${Date.now()}`,
+                conversation_id: 'test_session',
+                sender_type: 'ai',
+                sender_name: 'System',
+                content: `❌ Error: ${error.message || 'Failed to get response'}`,
+                attachments: [],
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            setTestMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsTesting(false);
+        }
     };
 
     const renderKnowledgeBase = () => (
@@ -485,12 +520,41 @@ Based on all the above, provide a response.`;
                             <label className="block text-sm font-medium text-slate-300 mb-1">Avatar du chatbot</label>
                             <div className="flex items-center gap-4">
                                 {formData.avatar_url ? (
-                                     <img src={formData.avatar_url} alt="avatar" className="w-16 h-16 rounded-full bg-slate-700" />
+                                     <img src={formData.avatar_url} alt="avatar" className="w-16 h-16 rounded-full bg-slate-700 object-cover" />
                                 ) : (
-                                    <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-3xl font-bold">{formData.name.charAt(0)}</div>
+                                    <div className="w-16 h-16 rounded-full bg-slate-700 flex items-center justify-center text-3xl font-bold text-slate-400">
+                                        {formData.name.charAt(0) || '?'}
+                                    </div>
                                 )}
-                                <button className="bg-slate-700 hover:bg-slate-600 text-sm font-semibold px-4 py-2 rounded-md">Télécharger</button>
+                                <div className="flex flex-col gap-2">
+                                    <input 
+                                        type="file" 
+                                        ref={avatarInputRef} 
+                                        onChange={handleAvatarChange} 
+                                        accept="image/*" 
+                                        className="hidden" 
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={handleAvatarClick}
+                                        className="bg-slate-700 hover:bg-slate-600 text-sm font-semibold px-4 py-2 rounded-md transition-colors"
+                                    >
+                                        📤 Télécharger une image
+                                    </button>
+                                    {formData.avatar_url && (
+                                        <button 
+                                            type="button"
+                                            onClick={() => setFormData({...formData, avatar_url: ''})}
+                                            className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-xs font-semibold px-4 py-1.5 rounded-md transition-colors"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    )}
+                                </div>
                             </div>
+                            <p className="text-xs text-slate-400 mt-2">
+                                Formats acceptés: JPG, PNG, GIF. Taille max: 2MB
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Couleurs de la marque</label>

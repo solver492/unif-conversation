@@ -34,7 +34,16 @@ const FileCard: React.FC<{ file: MediaFile }> = ({ file }) => {
 
 const MediaGallery: React.FC = () => {
     const [activeFilter, setActiveFilter] = React.useState<'all' | FileType>('all');
+    const [searchQuery, setSearchQuery] = React.useState('');
     
+    const filteredFiles = mediaFiles.filter(file => {
+        const matchesType = activeFilter === 'all' || file.type === activeFilter;
+        const matchesSearch = searchQuery === '' || 
+            file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            file.from.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesType && matchesSearch;
+    });
+
     return (
          <div className="flex flex-col h-full bg-slate-900">
             <header className="flex-shrink-0 flex items-center justify-between p-4 bg-slate-800/50 border-b border-slate-700">
@@ -47,7 +56,13 @@ const MediaGallery: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="relative flex-grow max-w-lg">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input type="search" placeholder="Search files by name..." className="w-full bg-slate-800 border border-slate-700 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"/>
+                        <input 
+                            type="search" 
+                            placeholder="Search files by name..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
                          <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-md p-1">
@@ -62,11 +77,21 @@ const MediaGallery: React.FC = () => {
                     </div>
                 </div>
 
+                {searchQuery && (
+                    <div className="mb-4 text-sm text-slate-400">
+                        {filteredFiles.length} file{filteredFiles.length !== 1 ? 's' : ''} found
+                    </div>
+                )}
+                
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                    {mediaFiles
-                        .filter(file => activeFilter === 'all' || file.type === activeFilter)
-                        .map(file => <FileCard key={file.id} file={file} />)
-                    }
+                    {filteredFiles.length === 0 ? (
+                        <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-500">
+                            <p>No files found</p>
+                            {searchQuery && <p className="text-sm mt-2">Try adjusting your search</p>}
+                        </div>
+                    ) : (
+                        filteredFiles.map(file => <FileCard key={file.id} file={file} />)
+                    )}
                 </div>
             </main>
         </div>

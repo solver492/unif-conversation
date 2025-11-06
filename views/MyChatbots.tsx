@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initialChatbots } from '../data';
 import type { Chatbot } from '../types';
 import { PlusCircleIcon, PencilIcon, SearchIcon, BellIcon, ConversationsIcon } from '../components/IconComponents';
 import { ChatbotEditor } from '../components/ChatbotEditor';
+import { storage } from '../utils/storage';
 
 const ChatbotCard: React.FC<{ chatbot: Chatbot; onEdit: (chatbot: Chatbot) => void }> = ({ chatbot, onEdit }) => (
     <div className="bg-slate-800 rounded-lg p-6 flex flex-col">
@@ -37,10 +38,17 @@ const ChatbotCard: React.FC<{ chatbot: Chatbot; onEdit: (chatbot: Chatbot) => vo
     </div>
 );
 
-const MyChatbots: React.FC = () => {
-    const [chatbots, setChatbots] = useState<Chatbot[]>(initialChatbots);
+const MyChatbots: React.FC<{ addNotification?: (notification: any) => void }> = ({ addNotification }) => {
+    const [chatbots, setChatbots] = useState<Chatbot[]>(() => {
+        return storage.getChatbots() || initialChatbots;
+    });
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingChatbot, setEditingChatbot] = useState<Chatbot | null>(null);
+
+    // Save chatbots to localStorage whenever they change
+    useEffect(() => {
+        storage.saveChatbots(chatbots);
+    }, [chatbots]);
 
     const handleCreateNew = () => {
         setEditingChatbot(null); // Passing null for creation
@@ -53,13 +61,36 @@ const MyChatbots: React.FC = () => {
     };
 
     const handleSave = (updatedBot: Chatbot) => {
-        if (chatbots.some(bot => bot.id === updatedBot.id)) {
-            // Update existing
-            setChatbots(bots => bots.map(b => b.id === updatedBot.id ? updatedBot : b));
-        } else {
+        const isNewBot = !chatbots.some(bot => bot.id === updatedBot.id);
+        
+        if (isNewBot) {
             // Add new
             setChatbots(bots => [...bots, updatedBot]);
+            
+            // Notification pour nouvel agent créé
+            if (addNotification) {
+                addNotification({
+                    type: 'success',
+                    title: '✅ Agent créé avec succès!',
+                    message: `${updatedBot.name} est maintenant actif et prêt à recevoir des clients`,
+                    duration: 8000
+                });
+            }
+        } else {
+            // Update existing
+            setChatbots(bots => bots.map(b => b.id === updatedBot.id ? updatedBot : b));
+            
+            // Notification pour agent modifié
+            if (addNotification) {
+                addNotification({
+                    type: 'success',
+                    title: '✅ Agent mis à jour!',
+                    message: `Les modifications de ${updatedBot.name} ont été enregistrées`,
+                    duration: 6000
+                });
+            }
         }
+        
         setIsEditorOpen(false);
         setEditingChatbot(null);
     };

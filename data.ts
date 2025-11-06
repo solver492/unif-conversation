@@ -67,11 +67,22 @@ export const conversations: Conversation[] = [
       email: 'maria.garcia@example.com',
       avatar_url: 'https://i.pravatar.cc/40?u=maria',
       origin: 'Website Checkout',
+      location: {
+        country: 'Spain',
+        city: 'Madrid',
+        ip: '185.45.23.12'
+      },
+      first_seen: '2 hours ago',
+      last_seen: '2 min ago',
+      page_url: 'https://rhilkom.com/checkout',
+      referrer: 'https://google.com'
     },
     status: 'active',
     last_message_at: '2 min ago',
     last_message_snippet: 'Okay, that sounds great. Thank you!',
     unread_count: 1,
+    is_bot_active: false,
+    assigned_agent: 'Alex (Agent)'
   },
   {
     id: 'conv2',
@@ -81,11 +92,21 @@ export const conversations: Conversation[] = [
       email: 'john.doe@example.com',
       avatar_url: 'https://i.pravatar.cc/40?u=john',
       origin: 'Product Page',
+      location: {
+        country: 'USA',
+        city: 'New York',
+        ip: '192.168.1.45'
+      },
+      first_seen: '30 min ago',
+      last_seen: '15 min ago',
+      page_url: 'https://d3drone.com/products/d3x',
+      referrer: 'https://facebook.com'
     },
     status: 'pending',
     last_message_at: '15 min ago',
     last_message_snippet: 'I need help with my order #D3-58292.',
     unread_count: 0,
+    is_bot_active: true
   },
   {
     id: 'conv3',
@@ -95,11 +116,21 @@ export const conversations: Conversation[] = [
       email: 'chen.wang@example.com',
       avatar_url: 'https://i.pravatar.cc/40?u=chen',
       origin: 'Pricing Page',
+      location: {
+        country: 'China',
+        city: 'Beijing',
+        ip: '123.45.67.89'
+      },
+      first_seen: '2 hours ago',
+      last_seen: '1 hour ago',
+      page_url: 'https://monauxiliaire.com/pricing',
+      referrer: 'https://linkedin.com'
     },
     status: 'active',
     last_message_at: '1 hour ago',
     last_message_snippet: 'Can you explain the premium features?',
     unread_count: 0,
+    is_bot_active: true
   },
    {
     id: 'conv4',
@@ -109,11 +140,21 @@ export const conversations: Conversation[] = [
       email: 'aisha.khan@example.com',
       avatar_url: 'https://i.pravatar.cc/40?u=aisha',
       origin: 'Support Portal',
+      location: {
+        country: 'France',
+        city: 'Paris',
+        ip: '78.123.45.67'
+      },
+      first_seen: '5 hours ago',
+      last_seen: '3 hours ago',
+      page_url: 'https://rhilkom.com/support',
+      referrer: 'direct'
     },
     status: 'resolved',
     last_message_at: '3 hours ago',
     last_message_snippet: 'Thank you for your help!',
     unread_count: 0,
+    is_bot_active: true
   },
 ];
 
