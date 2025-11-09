@@ -267,12 +267,12 @@
             const clientData = {
                 name: 'Visiteur',
                 email: null,
-                origin: window.location.hostname,
+                origin: (typeof window !== 'undefined' && window.location) ? window.location.hostname : 'unknown',
                 location: await getClientLocation(),
                 visit_info: {
-                    page: window.location.href,
-                    referrer: document.referrer,
-                    userAgent: navigator.userAgent
+                    page: (typeof window !== 'undefined' && window.location) ? window.location.href : '',
+                    referrer: (typeof document !== 'undefined') ? document.referrer : '',
+                    userAgent: (typeof navigator !== 'undefined') ? navigator.userAgent : ''
                 }
             };
 
